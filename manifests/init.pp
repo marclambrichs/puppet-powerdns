@@ -1,31 +1,85 @@
 # powerdns
+#
+# @param authoritative
+# @param auth_config
+# @param auth_configdir
+# @param auth_configpath
+# @param auth_package
+# @param auth_package_ensure
+# @param auth_service
+# @param backend
+# @param backend_create_tables  
+# @param backend_install
+# @param custom_epel    
+# @param custom_repo
+# @param db_file
+# @param db_root_password
+# @param db_username
+# @param db_password
+# @param db_name
+# @param db_host
+# @param ldap_backend_package_name
+# @param ldap_host
+# @param ldap_basedn
+# @param ldap_method
+# @param ldap_binddn
+# @param ldap_secret
+# @param mysql_schema_file
+# @param pgsql_backend_package_name
+# @param pgsql_schema_file  
+# @param recursor
+# @param recursor_config
+# @param recursor_configpath
+# @param recursor_package
+# @param recursor_package_ensure  
+# @param recursor_service
+# @param sqlite_backend_package_name
+# @param sqlite_package_name
+# @param sqlite_schema_file
+# @param version  
 class powerdns (
-  Boolean                    $authoritative                      = $::powerdns::params::authoritative,
-  Boolean                    $recursor                           = $::powerdns::params::recursor,
-  Enum['ldap', 'mysql', 'bind', 'postgresql', 'sqlite'] $backend = $::powerdns::params::backend,
-  Boolean                    $backend_install                    = $::powerdns::params::backend_install,
-  Boolean                    $backend_create_tables              = $::powerdns::params::backend_create_tables,
-  Optional[String[1]]        $db_root_password                   = $::powerdns::params::db_root_password,
-  Optional[String[1]]        $db_username                        = $::powerdns::params::db_username,
-  Optional[String[1]]        $db_password                        = $::powerdns::params::db_password,
-  Optional[String[1]]        $db_name                            = $::powerdns::params::db_name,
-  Optional[String[1]]        $db_host                            = $::powerdns::params::db_host,
-  Optional[String[1]]        $db_file                            = $::powerdns::params::db_file,
-  Optional[String[1]]        $ldap_host                          = $::powerdns::params::ldap_host,
-  Optional[String[1]]        $ldap_basedn                        = $::powerdns::params::ldap_basedn,
-  Optional[String[1]]        $ldap_method                        = $::powerdns::params::ldap_method,
-  Optional[String[1]]        $ldap_binddn                        = $::powerdns::params::ldap_binddn,
-  Optional[String[1]]        $ldap_secret                        = $::powerdns::params::ldap_secret,
-  Boolean                    $custom_repo                        = $::powerdns::params::custom_repo,
-  Boolean                    $custom_epel                        = $::powerdns::params::custom_epel,
-  Enum['4.0','4.1']          $version                            = $::powerdns::params::version,
-  String[1]                  $mysql_schema_file                  = $::powerdns::params::mysql_schema_file,
-  String[1]                  $pgsql_schema_file                  = $::powerdns::params::pgsql_schema_file,
-) inherits powerdns::params {
+  Boolean $authoritative,
+  Hash    $auth_config = {},
+  String  $auth_configdir,
+  String  $auth_configpath,
+  String  $auth_package,
+  Enum['present','installed','absent','purged','latest'] $auth_package_ensure,
+  String  $auth_service,
+  Enum['ldap', 'mysql', 'bind', 'postgresql', 'sqlite'] $backend,
+  Boolean $backend_create_tables,  
+  Boolean $backend_install,
+  Boolean $custom_epel,    
+  Boolean $custom_repo,
+  String  $db_file,
+  String  $db_root_password,
+  String  $db_username,
+  String  $db_password,
+  String  $db_name,
+  String  $db_host,
+  String  $ldap_backend_package_name,
+  String  $ldap_host,
+  String  $ldap_basedn,
+  String  $ldap_method,
+  String  $ldap_binddn,
+  String  $ldap_secret,
+  String  $mysql_schema_file,
+  String  $pgsql_backend_package_name,
+  String  $pgsql_schema_file,  
+  Boolean $recursor,
+  Hash    $recursor_config = {},
+  String  $recursor_configpath,
+  String  $recursor_package,
+  Enum['present','installed','absent','purged','latest'] $recursor_package_ensure,  
+  String  $recursor_service,
+  String  $sqlite_backend_package_name,
+  String  $sqlite_package_name,
+  String  $sqlite_schema_file,
+  Enum['4.0','4.1'] $version,  
+) {
 
   # Do some additional checks. In certain cases, some parameters are no longer optional.
   if $authoritative {
-    if ($::powerdns::backend != 'bind') and ($::powerdns::backend != 'ldap') and ($::powerdns::backend != 'sqlite') {
+    if ($backend != 'bind') and ($backend != 'ldap') and ($backend != 'sqlite') {
       assert_type(String[1], $db_password) |$expected, $actual| {
         fail("'db_password' must be a non-empty string when 'authoritative' == true")
       }
@@ -44,20 +98,9 @@ class powerdns (
 
   if $authoritative {
     contain powerdns::authoritative
-
-    # Set up Hiera. Even though it's not necessary to explicitly set $type for the authoritative
-    # config, it is added for clarity.
-    $powerdns_auth_config = lookup('powerdns::auth::config', Hash, 'deep', {})
-    $powerdns_auth_defaults = { 'type' => 'authoritative' }
-    create_resources(powerdns::config, $powerdns_auth_config, $powerdns_auth_defaults)
   }
 
   if $recursor {
     contain powerdns::recursor
-
-    # Set up Hiera for the recursor.
-    $powerdns_recursor_config = lookup('powerdns::recursor::config', Hash, 'deep', {})
-    $powerdns_recursor_defaults = { 'type' => 'recursor' }
-    create_resources(powerdns::config, $powerdns_recursor_config, $powerdns_recursor_defaults)
   }
 }

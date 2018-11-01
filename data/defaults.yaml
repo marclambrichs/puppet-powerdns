@@ -1,0 +1,32 @@
+---
+lookup_options:
+  powerdns::auth_config:
+    merge:
+      strategy: deep
+      merge_hash_arrays: true
+  powerdns::recursor_config:
+    merge:
+      strategy: deep
+      merge_hash_arrays: true      
+
+powerdns::authoritative: true
+powerdns::auth_package_ensure: installed
+powerdns::backend: 'mysql'
+powerdns::backend_install: true
+powerdns::backend_create_tables: true
+powerdns::custom_repo: false
+powerdns::custom_epel: false
+powerdns::db_file: '/var/lib/powerdns/powerdns.sqlite3'
+powerdns::db_host: 'localhost'
+powerdns::db_name: 'powerdns'
+powerdns::db_password: undef
+powerdns::db_root_password: undef
+powerdns::db_username: 'powerdns'
+powerdns::ldap_basedn: undef
+powerdns::ldap_binddn: undef
+powerdns::ldap_host: 'ldap://localhost/'
+powerdns::ldap_method: 'strict'
+powerdns::ldap_secret: undef
+powerdns::recursor: false
+powerdns::recursor_package_ensure: absent
+powerdns::version: '4.1'

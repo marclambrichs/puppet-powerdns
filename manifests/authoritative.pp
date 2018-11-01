@@ -1,12 +1,25 @@
 # powerdns::authoritative
-class powerdns::authoritative ($package_ensure = $powerdns::params::default_package_ensure) inherits powerdns {
+#
+# @param backend
+# @param config
+# @param package
+# @param package_ensure
+# @param service
+class powerdns::authoritative (
+  String $backend        = $powerdns::backend,  
+  Hash   $config         = $powerdns::auth_config,
+  String $package        = $powerdns::auth_package,
+  String $package_ensure = $powerdns::auth_package_ensure,
+  String $service        = $powerdns::auth_service,
+) inherits powerdns {
+  
   # install the powerdns package
-  package { $::powerdns::params::authoritative_package:
+  package { $package:
     ensure => $package_ensure,
   }
 
   # install the right backend
-  case $::powerdns::backend {
+  case $backend {
     'mysql': {
       include powerdns::backends::mysql
     }
@@ -23,13 +36,19 @@ class powerdns::authoritative ($package_ensure = $powerdns::params::default_pack
       include powerdns::backends::sqlite
     }
     default: {
-      fail("${::powerdns::backend} is not supported. We only support 'mysql', 'bind', 'postgresql', 'ldap' and 'sqlite' at the moment.")
+      fail("${backend} is not supported. We only support 'mysql', 'bind', 'postgresql', 'ldap' and 'sqlite' at the moment.")
     }
   }
 
-  service { $::powerdns::params::authoritative_service:
+  # create config
+  if length($config) > 0 {
+    $auth_defaults = { 'type' => 'authoritative' }
+    create_resources(powerdns::config, $config, $auth_defaults)
+  }
+
+  service { $service:
     ensure  => running,
     enable  => true,
-    require => Package[$::powerdns::params::authoritative_package],
+    require => Package[$package],
   }
 }

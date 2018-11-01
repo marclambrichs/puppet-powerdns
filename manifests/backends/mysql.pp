@@ -1,5 +1,27 @@
 # mysql backend for powerdns
-class powerdns::backends::mysql inherits powerdns {
+# @param auth_package
+# @param auth_service
+# @param backend_create_tables
+# @param backend_install
+# @param db_host
+# @param db_name
+# @param db_password
+# @param db_root_password
+# @param db_username
+# @param mysql_schema_file
+class powerdns::backends::mysql (
+  String  $auth_package          = $powerdns::auth_package,
+  String  $auth_service          = $powerdns::auth_service,
+  Boolean $backend_create_tables = $powerdns::backend_create_tables,
+  Boolean $backend_install       = $powerdns::backend_install,
+  String  $db_host               = $powerdns::db_host,
+  String  $db_name               = $powerdns::db_name,
+  String  $db_password           = $powerdns::db_password,
+  String  $db_root_password      = $powerdns::db_root_password,
+  String  $db_username           = $powerdns::db_username,
+  String  $mysql_schema_file     = $powerdns::mysql_schema_file
+) inherits powerdns {
+  
   # set the configuration variables
   powerdns::config { 'launch':
     ensure  => present,
@@ -11,43 +33,43 @@ class powerdns::backends::mysql inherits powerdns {
   powerdns::config { 'gmysql-host':
     ensure  => present,
     setting => 'gmysql-host',
-    value   => $::powerdns::db_host,
+    value   => $db_host,
     type    => 'authoritative',
   }
 
   powerdns::config { 'gmysql-user':
     ensure  => present,
     setting => 'gmysql-user',
-    value   => $::powerdns::db_username,
+    value   => $db_username,
     type    => 'authoritative',
   }
 
   powerdns::config { 'gmysql-password':
     ensure  => present,
     setting => 'gmysql-password',
-    value   => $::powerdns::db_password,
+    value   => $db_password,
     type    => 'authoritative',
   }
 
   powerdns::config { 'gmysql-dbname':
     ensure  => present,
     setting => 'gmysql-dbname',
-    value   => $::powerdns::db_name,
+    value   => $db_name,
     type    => 'authoritative',
   }
 
   # set up the powerdns backend
   package { 'pdns-backend-mysql':
     ensure  => installed,
-    before  => Service[$::powerdns::params::authoritative_service],
-    require => Package[$::powerdns::params::authoritative_package],
+    before  => Service[$auth_service],
+    require => Package[$auth_package],
   }
 
-  if $::powerdns::backend_install {
+  if $backend_install {
     # mysql database
     if ! defined(Class['::mysql::server']) {
       class { '::mysql::server':
-        root_password      => $::powerdns::db_root_password,
+        root_password      => $db_root_password,
         create_root_my_cnf => true,
       }
     }
@@ -57,14 +79,14 @@ class powerdns::backends::mysql inherits powerdns {
     }
   }
 
-  if $::powerdns::backend_create_tables {
+  if $backend_create_tables {
     # make sure the database exists
-    mysql::db { $::powerdns::db_name:
-      user     => $::powerdns::db_username,
-      password => $::powerdns::db_password,
-      host     => $::powerdns::db_host,
+    mysql::db { $db_name:
+      user     => $db_username,
+      password => $db_password,
+      host     => $db_host,
       grant    => [ 'ALL' ],
-      sql      => $::powerdns::mysql_schema_file,
+      sql      => $mysql_schema_file,
       require  => Package['pdns-backend-mysql'],
     }
   }

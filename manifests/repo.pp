@@ -1,9 +1,19 @@
 # powerdns::repo
-class powerdns::repo inherits powerdns {
+#
+# @param auth_package
+# @param custom_epel
+# @param recursor_package
+# @param version
+class powerdns::repo (
+  String $auth_package = $powerdns::auth_package,
+  Boolean $custom_epel = $powerdns::custom_epel,
+  String $recursor_package = $powerdns::recursor_package,
+  String $version = $powerdns::version,
+) inherits powerdns {
 
   # The repositories of PowerDNS use a version such as '40' for version 4.0
   # and 41 for version 4.1.
-  case $::powerdns::version {
+  case $version {
     '4.0': {
       $short_version = '40'
     }
@@ -11,18 +21,18 @@ class powerdns::repo inherits powerdns {
       $short_version = '41'
     }
     default: {
-      fail("Version ${::powerdns::version} is not supported.")
+      fail("Version ${version} is not supported.")
     }
   }
 
   case $facts['os']['family'] {
     'RedHat': {
-      unless $::powerdns::custom_epel {
+      unless $custom_epel {
         include ::epel
       }
 
-      Yumrepo['powerdns'] -> Package <| title == $::powerdns::params::authoritative_package |>
-      Yumrepo['powerdns-recursor'] -> Package <| title == $::powerdns::params::recursor_package |>
+      Yumrepo['powerdns'] -> Package <| title == $auth_package |>
+      Yumrepo['powerdns-recursor'] -> Package <| title == $recursor_package |>
 
       package { 'yum-plugin-priorities':
         ensure => installed,
@@ -31,7 +41,7 @@ class powerdns::repo inherits powerdns {
 
       yumrepo { 'powerdns':
         name        => 'powerdns',
-        descr       => "PowerDNS repository for PowerDNS Authoritative - version ${::powerdns::version}",
+        descr       => "PowerDNS repository for PowerDNS Authoritative - version ${version}",
         baseurl     => "http://repo.powerdns.com/centos/\$basearch/\$releasever/auth-${short_version}",
         gpgkey      => 'https://repo.powerdns.com/FD380FBB-pub.asc',
         gpgcheck    => 1,
@@ -42,7 +52,7 @@ class powerdns::repo inherits powerdns {
 
       yumrepo { 'powerdns-recursor':
         name        => 'powerdns-recursor',
-        descr       => "PowerDNS repository for PowerDNS Recursor - version ${::powerdns::version}",
+        descr       => "PowerDNS repository for PowerDNS Recursor - version ${version}",
         baseurl     => "http://repo.powerdns.com/centos/\$basearch/\$releasever/rec-${short_version}",
         gpgkey      => 'https://repo.powerdns.com/FD380FBB-pub.asc',
         gpgcheck    => 1,

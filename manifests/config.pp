@@ -1,5 +1,5 @@
 # powerdns::config
-define powerdns::config(
+define powerdns::config (
   String                            $setting = $title,
   Variant[String, Integer]          $value   = '',
   Enum['present', 'absent']         $ensure  = 'present',
@@ -16,13 +16,13 @@ define powerdns::config(
   else { $line = "${setting}=${value}" }
 
   if $type == 'authoritative' {
-    $path            = $::powerdns::params::authoritative_config
-    $require_package = $::powerdns::params::authoritative_package
-    $notify_service  = $::powerdns::params::authoritative_service
+    $path            = $::powerdns::auth_configpath
+    $require_package = $::powerdns::auth_package
+    $notify_service  = $::powerdns::auth_service
   } else {
-    $path            = $::powerdns::params::recursor_config
-    $require_package = $::powerdns::params::recursor_package
-    $notify_service  = $::powerdns::params::recursor_service
+    $path            = $::powerdns::recursor_configpath
+    $require_package = $::powerdns::recursor_package
+    $notify_service  = $::powerdns::recursor_service
   }
 
   file_line { "powerdns-config-${setting}-${path}":
